@@ -113,6 +113,7 @@ class ParamName:
     FROM_ITEM = "from_item"
     TO_ITEM = "to_item"
     FROM_TIME = "from_time"
+    TIME = "time"
     TO_TIME = "to_time"
     FROM_PRICE = "from_price"
     TO_PRICE = "to_price"
@@ -146,14 +147,14 @@ class ParamName:
     ALL = [
         ID, ITEM_ID, TRADE_ID, ORDER_ID, USER_ORDER_ID, LIMIT,
         IS_USE_MAX_LIMIT, LIMIT_SKIP, PAGE, SORTING, SYMBOL, SYMBOLS,
-        DIRECTION, INTERVAL, ORDER_TYPE, LEVEL, TIMESTAMP, FROM_ITEM, TO_ITEM,
+        DIRECTION, INTERVAL, TIME, ORDER_TYPE, LEVEL, TIMESTAMP, FROM_ITEM, TO_ITEM,
         FROM_TIME, TO_TIME, FROM_PRICE, TO_PRICE, FROM_AMOUNT, TO_AMOUNT,
         PRICE_OPEN, PRICE_CLOSE, PRICE_HIGH, PRICE_LOW, PRICE, AMOUNT_ORIGINAL,
         AMOUNT_EXECUTED, AMOUNT, FEE, REBATE, BIDS, ASKS, PLATFORM_ID,
         PLATFORM, PLATFORMS, IS_SHORT
     ]
 
-    _timestamp_names = (TIMESTAMP, FROM_TIME, TO_TIME)
+    _timestamp_names = (TIMESTAMP, FROM_TIME, TO_TIME, TIME)
     _decimal_names = (PRICE, FROM_PRICE, TO_PRICE, AMOUNT, FROM_AMOUNT,
                       TO_AMOUNT)
 

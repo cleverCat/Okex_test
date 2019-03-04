@@ -369,7 +369,7 @@ class OkexWSConverterV1(WSConverter):
             ParamName.ITEM_ID,
             ParamName.PRICE,
             ParamName.AMOUNT,
-            ParamName.FROM_TIME,
+            ParamName.TIME,
             ParamName.DIRECTION,
             ParamName.SYMBOL,
         ],

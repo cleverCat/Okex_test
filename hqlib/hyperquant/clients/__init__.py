@@ -463,9 +463,6 @@ class ProtocolConverter:
     def _get_platform_endpoint(self, endpoint, params):
         # Convert our code's endpoint to custom platform's endpoint
 
-        self.logger.debug('_get_platform_endpoint')
-        self.logger.debug(endpoint)
-        self.logger.debug(params)
         # Endpoint.TRADE -> "trades/{symbol}" or "trades" or lambda params: "trades"
         platform_endpoint = self.endpoint_lookup.get(
             endpoint, endpoint) if self.endpoint_lookup else endpoint
@@ -501,9 +498,6 @@ class ProtocolConverter:
                 "Data argument is empty in parse(). endpoint: %s, data: %s",
                 endpoint, data)
             return data
-        self.logger.debug(data)
-        self.logger.debug(endpoint)
-        self.logger.debug('parse11')
 
         # (If list of items data, but not an item data as a list)
         if isinstance(data, list):  # and not isinstance(data[0], list):
@@ -512,8 +506,6 @@ class ProtocolConverter:
             ]
             # (Skip empty)
             result = [item for item in result if item]
-            self.logger.debug(result)
-            self.logger.debug('result')
             return result
         else:
             return self._parse_item(endpoint, data)
@@ -529,8 +521,6 @@ class ProtocolConverter:
         # Create and set up item by item_data (using lookup to convert property names)
         item = self._create_and_set_up_object(item_class, item_data)
         item = self._post_process_item(item)
-        self.logger.debug('item')
-        self.logger.debug(item)
         return item
 
     def _post_process_item(self, item):
@@ -603,10 +593,6 @@ class ProtocolConverter:
         key_pair = lookup.items() if isinstance(lookup,
                                                 dict) else enumerate(lookup)
 
-        self.logger.debug('---------------------------------')
-        self.logger.debug('_create_and_set_up_object')
-        self.logger.debug(data)
-        self.logger.debug('---------------------------------')
         for platform_key, key in key_pair:
             if key and (not isinstance(data, dict) or platform_key in data):
                 value = data[platform_key]
@@ -1303,8 +1289,6 @@ class WSConverter(ProtocolConverter):
             if self.supported_endpoints else set()
 
     def generate_subscriptions(self, endpoints, symbols, **params):
-        self.logger.debug('WSConverter.generate_subscription')
-        self.logger.debug(params)
         result = set()
         for endpoint in endpoints:
             if endpoint in self.symbol_endpoints:
@@ -1321,8 +1305,6 @@ class WSConverter(ProtocolConverter):
         return result
 
     def _generate_subscription(self, endpoint, symbol=None, **params):
-        self.logger.debug('WSConverter._generate_subscription')
-        self.logger.debug(params)
         _, new_params = self.prepare_params(endpoint, {
             ParamName.SYMBOL: symbol,
             **params
@@ -1436,7 +1418,6 @@ class WSClient(BaseClient):
         self.logger.debug(
             "Subscribe on endpoints: %s and symbols: %s prev: %s %s",
             endpoints, symbols, self.endpoints, self.symbols)
-        self.logger.debug(params)
         # if not endpoints and not symbols:
         #     subscriptions = self.prev_subscriptions
         # else:
@@ -1457,8 +1438,6 @@ class WSClient(BaseClient):
 
         subscriptions = self.converter.generate_subscriptions(
             endpoints, symbols, **params)
-        self.logger.debug('WSClient.subscribe')
-        self.logger.debug(subscriptions)
 
         self.current_subscriptions = self.current_subscriptions.union(subscriptions) \
             if self.current_subscriptions else subscriptions
@@ -1526,7 +1505,7 @@ class WSClient(BaseClient):
         self.logger.debug(" Subscribe to subscriptions: %s", subscriptions)
         if not self.is_started or not self.IS_SUBSCRIPTION_COMMAND_SUPPORTED:
             # Connect on first subscribe() or reconnect on the further ones
-            self.logger.debug("reconect %s", self.is_started)
+            self.logger.debug("reconect")
             self.reconnect()
         else:
             self._send_subscribe(subscriptions)
@@ -1534,8 +1513,6 @@ class WSClient(BaseClient):
     def _unsubscribe(self, subscriptions):
         # Call unsubscribe command with "subscriptions" param or reconnect with
         # "self.current_subscriptions" in URL - depending on platform
-        self.logger.debug(" Subscribe from subscriptions: %s", subscriptions)
-        self.logger.debug(self.is_started)
         if not self.is_started or not self.IS_SUBSCRIPTION_COMMAND_SUPPORTED:
             self.reconnect()
         else:
@@ -1565,7 +1542,6 @@ class WSClient(BaseClient):
 
         # Connect
         if not self.ws:
-            self.logger.debug("not self.ws")
             self.ws = WebSocketApp(
                 self.url,
                 on_open=self._on_open,
@@ -1580,19 +1556,7 @@ class WSClient(BaseClient):
         self.logger.debug("Start WebSocket with url: %s" % self.ws.url)
         self.is_started = True
 
-        def sendHeartBeat(ws):
-            ping = '{"event":"ping"}'
-            while (True):
-                sent = False
-                while (sent is False):
-                    try:
-                        ws.send(ping)
-                        sent = True
-                    except Exception as e:
-                        raise e
-                time.sleep(30)
-
-        self.thread = Thread(target=sendHeartBeat, args=(self.ws, ))
+        self.thread = Thread(target=self.ws.run_forever)
         self.ws.run_forever()
         self.thread.daemon = True
         self.thread.start()
@@ -1628,14 +1592,12 @@ class WSClient(BaseClient):
         if self.on_connect:
             self.on_connect()
 
-        self.logger.debug(f'_on_open {self.IS_SUBSCRIPTION_COMMAND_SUPPORTED}')
-        self.logger.debug(f'_on_open {self.IS_SUBSCRIPTION_COMMAND_SUPPORTED}')
         # Subscribe by command on connect
         if self.IS_SUBSCRIPTION_COMMAND_SUPPORTED and not self.is_subscribed_with_url:
             self._subscribe(self.subscriptions_data)
 
     def _on_message(self, message):
-       
+
         self.logger.debug("On message: %s", message[:200])
         # str -> json
         try:
@@ -1651,8 +1613,6 @@ class WSClient(BaseClient):
         # Process items
         self._data_buffer = []
 
-        self.logger.debug("on_message")
-        self.logger.debug(result)
         if result and isinstance(result, list):
             for item in result:
                 self.on_item_received(item)

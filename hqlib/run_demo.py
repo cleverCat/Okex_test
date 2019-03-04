@@ -10,11 +10,11 @@ from hyperquant.clients.tests.utils import set_up_logging
 settings.configure(DEBUG=True, default_settings=hqlib_settings)
 
 # Enable logging if needed
-set_up_logging()
+#set_up_logging()
 
 # Cange to Platform.BINANCE to see example
 TEST_PLATFORM = Platform.OKEX
-#TEST_PLATFORM = Platform.BINANCE
+# TEST_PLATFORM = Platform.BINANCE
 
 TEST_SYMBOLS = {
     Platform.BINANCE: ['ETHBTC', 'BTCUSDT'],
@@ -34,7 +34,10 @@ print('\n\n---------------------')
 client = utils.create_ws_client(platform_id=TEST_PLATFORM)
 client.on_data_item = lambda item: print(item)  # print received parsed objects
 client.subscribe(
-    endpoints=[Endpoint.TRADE, Endpoint.CANDLE],
+    endpoints=[
+        Endpoint.TRADE,
+        Endpoint.CANDLE
+    ],
     symbols=TEST_SYMBOLS[TEST_PLATFORM],
     interval=Interval.MIN_1)
 
