@@ -16,7 +16,9 @@ When anyone calling our REST API this format is used too.
 
 # Constants
 
-
+# TODO 
+# зачем использовать классы для получения парсеров если можно их грузить из 
+# папки ориентируясь по типу?
 class Platform:
     BINANCE = 1
     BITFINEX = 2

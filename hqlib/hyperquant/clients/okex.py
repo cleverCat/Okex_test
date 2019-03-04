@@ -116,9 +116,8 @@ class OkexRESTConverterV1(RESTConverter):
     }
 
     error_code_by_platform_error_code = {
-        -2014: ErrorCode.UNAUTHORIZED,
-        -1121: ErrorCode.WRONG_SYMBOL,
-        -1100: ErrorCode.WRONG_PARAM,
+        1024: ErrorCode.WRONG_SYMBOL,
+        1008: ErrorCode.WRONG_PARAM,
     }
     error_code_by_http_status = {
         429: ErrorCode.RATE_LIMIT,
@@ -390,9 +389,8 @@ class OkexWSConverterV1(WSConverter):
 
     # https://github.com/binance-exchange/binance-official-api-docs/blob/master/errors.md
     error_code_by_platform_error_code = {
-        # -2014: ErrorCode.UNAUTHORIZED,
-        # -1121: ErrorCode.WRONG_SYMBOL,
-        # -1100: ErrorCode.WRONG_PARAM,
+        1024: ErrorCode.WRONG_SYMBOL,
+        2007: ErrorCode.WRONG_PARAM,
     }
     error_code_by_http_status = {}
 
