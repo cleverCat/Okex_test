@@ -1,0 +1,6 @@
+*.csv
+*.sqlite
+.mypy_cache/
+*.pyc
+*/__pycache__/
+/hqlib.zip

@@ -1,0 +1,9 @@
+version: '2'
+
+services:
+
+    test_hq:
+        build: .
+        volumes:
+            - ./hqlib:/srv
+        command: bash -c "pipenv run python run_demo.py"
