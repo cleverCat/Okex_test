@@ -904,8 +904,6 @@ class BaseRESTClient(BaseClient):
             self.session.close()
 
     def _send(self, method, endpoint, params=None, version=None, **kwargs):
-        print("_send")
-        print(endpoint)
         converter = self.get_or_create_converter(version)
 
         # Prepare

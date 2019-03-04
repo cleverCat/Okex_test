@@ -51,7 +51,6 @@ def get_or_create_ws_client(platform_id, is_private=False):
 
 def get_credentials_for(platform_id):
     platform_name = Platform.get_platform_name_by_id(platform_id)
-    print(platform_name)
     api_key, api_secret = settings.CREDENTIALS_BY_PLATFORM.get(platform_name)
     logging.info(api_key)
     logging.info(api_key)
