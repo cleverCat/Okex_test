@@ -1,4 +1,6 @@
 import hashlib
+import zlib
+import re
 import hmac
 import time
 from threading import Thread
@@ -369,6 +371,7 @@ class OkexWSConverterV1(WSConverter):
             ParamName.AMOUNT,
             ParamName.FROM_TIME,
             ParamName.DIRECTION,
+            ParamName.SYMBOL,
         ],
         Candle: [
             ParamName.TIMESTAMP,
@@ -377,9 +380,9 @@ class OkexWSConverterV1(WSConverter):
             ParamName.PRICE_LOW,
             ParamName.PRICE_CLOSE,
             ParamName.AMOUNT,  # only volume present
+            ParamName.SYMBOL,
         ]
     }
-    event_type_param = "e"
     endpoint_by_event_type = {
         "trade": Endpoint.TRADE,
         "kline": Endpoint.CANDLE,
@@ -404,15 +407,24 @@ class OkexWSConverterV1(WSConverter):
             symbol.lower() if symbol else symbol, **params), endpoint
 
     def parse(self, endpoint, data):
-        self.logger.debug("hello")
+        self.logger.debug("data")
+        self.logger.debug(data)
         if "data" in data:
-            # stream = data["stream"]  # no need
+            channel = data['channel']
+            symbol_regexp = None
+            if 'deals' in channel:
+                symbol_regexp = re.search('ok_sub_spot_(.+?)_deals', channel)
+            if 'kline' in channel:
+                symbol_regexp = re.search('ok_sub_spot_(.+?)_kline_*', channel)
+            symbol = None
+            if symbol_regexp:
+                symbol = symbol_regexp.group(1)
+                for i in data['data']:
+                    i += [symbol]
             data = data["data"]
         return super().parse(endpoint, data)
 
     def _parse_item(self, endpoint, item_data):
-        if endpoint == Endpoint.CANDLE and "k" in item_data:
-            item_data = item_data["k"]
         return super()._parse_item(endpoint, item_data)
 
 
@@ -431,6 +443,12 @@ class OkexWSClient(WSClient):
 
         return super()._subscribe(subscriptions)
 
+    def _on_message(self, message):
+        decompress = zlib.decompressobj(-zlib.MAX_WBITS)
+        inflated = decompress.decompress(message)
+        inflated += decompress.flush()
+        return super()._on_message(inflated.decode('utf-8'))
+
     def _send_subscribe(self, subscriptions):
         self.logger.debug('_send_subscribe')
         self.logger.debug(subscriptions)
@@ -441,10 +459,6 @@ class OkexWSClient(WSClient):
             self._send(event_data)
 
     def _parse(self, endpoint, data):
-        self.logger.debug(endpoint)
-        self.logger.debug(data)
-        self.logger.debug('_parse')
-
         batch_data = []
         for i in data:
             current_endpoint = self._channel_to_endpoint.get(i['channel'])

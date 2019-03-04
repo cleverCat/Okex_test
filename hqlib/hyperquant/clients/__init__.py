@@ -1635,17 +1635,11 @@ class WSClient(BaseClient):
             self._subscribe(self.subscriptions_data)
 
     def _on_message(self, message):
-        def inflate(data):
-            decompress = zlib.decompressobj(-zlib.MAX_WBITS)
-            inflated = decompress.decompress(data)
-            inflated += decompress.flush()
-            return inflated
-
+       
         self.logger.debug("On message: %s", message[:200])
         # str -> json
         try:
-            inflated = inflate(message).decode('utf-8')
-            data = json.loads(inflated)
+            data = json.loads(message)
         except json.JSONDecodeError:
             self.logger.error("Wrong JSON is received! Skipped. message: %s",
                               message)

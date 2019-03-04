@@ -10,7 +10,7 @@ from hyperquant.clients.tests.utils import set_up_logging
 settings.configure(DEBUG=True, default_settings=hqlib_settings)
 
 # Enable logging if needed
-#set_up_logging()
+set_up_logging()
 
 # Cange to Platform.BINANCE to see example
 TEST_PLATFORM = Platform.OKEX
