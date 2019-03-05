@@ -127,7 +127,6 @@ class OkexRESTConverterV1(RESTConverter):
     # For converting time
     is_source_in_milliseconds = True
 
-    # timestamp_platform_names = [ParamName.TIMESTAMP]
 
     def _process_param_value(self, name, value):
         if name == ParamName.FROM_ITEM or name == ParamName.TO_ITEM:
@@ -146,42 +145,8 @@ class OkexRESTConverterV1(RESTConverter):
             symbols = [item[ParamName.SYMBOL] for item in exchange_info]
             return symbols
 
-        self.logger.debug(endpoint)
         result = super().parse(endpoint, data)
         return result
-
-    def _generate_and_add_signature(self, platform_params, api_key,
-                                    api_secret):
-        if not api_key or not api_secret:
-            self.logger.error(
-                "Empty api_key or api_secret. Cannot generate signature.")
-            return None
-        ordered_params_list = self._order_params(platform_params)
-        # print("ordered_platform_params:", ordered_params_list)
-        query_string = "&".join(
-            ["{}={}".format(d[0], d[1]) for d in ordered_params_list])
-        # print("query_string:", query_string)
-        m = hmac.new(
-            api_secret.encode("utf-8"), query_string.encode("utf-8"),
-            hashlib.sha256)
-        signature = m.hexdigest()
-        # Add
-        # platform_params["signature"] = signature  # no need
-        # if ordered_params_list and ordered_params_list[-1][0] != "signature":
-        ordered_params_list.append(("signature", signature))
-        return ordered_params_list
-
-    def _order_params(self, platform_params):
-        # Convert params to sorted list with signature as last element.
-
-        params_list = [(key, value) for key, value in platform_params.items()
-                       if key != "signature"]
-        # Sort parameters by key
-        params_list.sort(key=itemgetter(0))
-        # Append signature to the end if present
-        if "signature" in platform_params:
-            params_list.append(("signature", platform_params["signature"]))
-        return params_list
 
 
 class OkexRESTClient(PrivatePlatformRESTClient):
@@ -238,62 +203,6 @@ class OkexRESTClient(PrivatePlatformRESTClient):
         return super().fetch_history(endpoint, symbol, limit, from_item,
                                      to_item, sorting, is_use_max_limit,
                                      from_time, to_time, **kwargs)
-
-    def fetch_order_book(self,
-                         symbol=None,
-                         limit=None,
-                         is_use_max_limit=False,
-                         version=None,
-                         **kwargs):
-        LIMIT_VALUES = [5, 10, 20, 50, 100, 500, 1000]
-        if limit not in LIMIT_VALUES:
-            self.logger.error("Limit value %s not in %s", limit, LIMIT_VALUES)
-        return super().fetch_order_book(symbol, limit, is_use_max_limit,
-                                        **kwargs)
-
-    def fetch_tickers(self, symbols=None, version=None, **kwargs):
-        items = super().fetch_tickers(symbols, version or "3", **kwargs)
-
-        # (Binance returns timestamp only for /api/v1/ticker/24hr which has weight of 40.
-        # /api/v3/ticker/price - has weight 2.)
-        timestamp = self.get_server_timestamp(version)
-        for item in items:
-            item.timestamp = timestamp
-            item.use_milliseconds = self.use_milliseconds
-
-        return items
-
-    def fetch_account_info(self, version=None, **kwargs):
-        return super().fetch_account_info(version or "3", **kwargs)
-
-    def create_order(self,
-                     symbol,
-                     order_type,
-                     direction,
-                     price=None,
-                     amount=None,
-                     is_test=False,
-                     version=None,
-                     **kwargs):
-        if order_type == OrderType.LIMIT:
-            # (About values:
-            # https://www.reddit.com/r/BinanceExchange/comments/8odvs4/question_about_time_in_force_binance_api/)
-            kwargs["timeInForce"] = "GTC"
-        return super().create_order(symbol, order_type, direction, price,
-                                    amount, is_test, version, **kwargs)
-
-    def cancel_order(self, order, symbol=None, version=None, **kwargs):
-        if hasattr(order, ParamName.SYMBOL) and order.symbol:
-            symbol = order.symbol
-        return super().cancel_order(order, symbol, version, **kwargs)
-
-    def check_order(self, order, symbol=None, version=None, **kwargs):
-        if hasattr(order, ParamName.SYMBOL) and order.symbol:
-            symbol = order.symbol
-        return super().check_order(order, symbol, version, **kwargs)
-
-    # def fetch_orders(self, symbol=None, limit=None, from_item=None, is_open=False, version=None, **kwargs):
-    #     return super().fetch_orders(symbol, limit, from_item, is_open, version, **kwargs)
 
     def _send(self, method, endpoint, params=None, version=None, **kwargs):
         if endpoint in self.converter.secured_endpoints:
@@ -398,15 +307,11 @@ class OkexWSConverterV1(WSConverter):
     is_source_in_milliseconds = True
 
     def _generate_subscription(self, endpoint, symbol=None, **params):
-        self.logger.debug('_generate_subscription')
-        self.logger.debug(params)
         return super()._generate_subscription(
             endpoint,
             symbol.lower() if symbol else symbol, **params), endpoint
 
     def parse(self, endpoint, data):
-        self.logger.debug("data")
-        self.logger.debug(data)
         if "data" in data:
             channel = data['channel']
             symbol_regexp = None
@@ -477,7 +382,6 @@ class OkexWSClient(WSClient):
 
         # Connect
         if not self.ws:
-            self.logger.debug("not self.ws")
             self.ws = WebSocketApp(
                 self.url,
                 on_open=self._on_open,
@@ -492,7 +396,7 @@ class OkexWSClient(WSClient):
         self.logger.debug("Start WebSocket with url: %s" % self.ws.url)
         self.is_started = True
 
-        def sendHeartBeat(ws):
+        def send_heart_beat(ws):
             ping = '{"event":"ping"}'
             while (True):
                 sent = False
@@ -504,7 +408,7 @@ class OkexWSClient(WSClient):
                         raise e
                 time.sleep(30)
 
-        self.thread = Thread(target=sendHeartBeat, args=(self.ws, ))
+        self.thread = Thread(target=send_heart_beat, args=(self.ws, ))
         self.ws.run_forever()
         self.thread.daemon = True
         self.thread.start()

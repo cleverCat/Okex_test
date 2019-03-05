@@ -1000,7 +1000,6 @@ class PlatformRESTClient(BaseRESTClient):
         # Common method for fetching history for any endpoint. Used in REST connector.
 
         # (Convert endpoint to history endpoint if they differ)
-        print('fetch_history')
         history_endpoint_lookup = self.converter.history_endpoint_lookup
         endpoint = history_endpoint_lookup.get(
             endpoint, endpoint) if history_endpoint_lookup else endpoint
@@ -1049,7 +1048,6 @@ class PlatformRESTClient(BaseRESTClient):
         # from_time and to_time used along with from_item and to_item as we often need to fetch
         # history by time and only Binance (as far as I know) doesn't support that (only by id)
 
-        print(Endpoint.TRADE)
         return self.fetch_history(Endpoint.TRADE, symbol, limit, from_item,
                                   to_item, sorting, is_use_max_limit,
                                   from_time, to_time, version, **kwargs)
